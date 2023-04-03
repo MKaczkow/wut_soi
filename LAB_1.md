@@ -13,6 +13,7 @@
 
 ## Inne
 Na razie pomijam część z `telnet`, bo wygląda, że wywołania systemowe działają dobrze bez tego...  
+Na razie pomijamy problem blokady deskryptorów przez inne procesy (tzn. proces może blokować > 1 proces, ale w tym przypadku tak nie będzie) -> przy rekusji
 
 ## Gdzie trzeba wprowadzać zmiany
 * `phoenix-rtos-kernel\include\syscalls.h`
