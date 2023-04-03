@@ -34,8 +34,12 @@ int syscalls_maxChildren(void * ustack)
 {
 	pid_t * whoMaxChildren;
 	GETFROMSTACK(ustack, pid_t *, whoMaxChildren, 0);
+	// GETFROMSTACK(ustack, int *, min, 0);
+	// GETFROMSTACK(ustack, int *, max, 0);
 	* whoMaxChildren = 0;
-	return posix_maxChildren(whoMaxChildren);
+	// FIXME: change below - min and max shouldn't be hardcoded
+	// get them from stack somehow
+	return posix_maxChildren(whoMaxChildren, 5, 19);
 }
 
 

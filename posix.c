@@ -85,7 +85,7 @@ static int posix_countChildren(process_info_t *process)
 
 	return descendantsCount;
 }
-
+ 
 int posix_maxChildren(pid_t * whoMaxChildren, int min, int max)
 {
 	process_info_t * process;
