@@ -21,3 +21,8 @@ Na razie pomijam część z `telnet`, bo wygląda, że wywołania systemowe dzia
 * `phoenix-rtos-kernel\posix\posix.c`
 
 main.c i Makefile powinny 'pojawić się' same...
+
+### Co trzeba oddać 
+1. `syscalls.c`
+2. `syscalls.h`
+3. `main.c`
