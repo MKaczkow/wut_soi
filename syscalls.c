@@ -30,16 +30,27 @@
 #define SYSCALLS_NAME(name)   syscalls_##name,
 #define SYSCALLS_STRING(name) #name,
 
+
+
 int syscalls_maxChildren(void * ustack)
-{
-	pid_t * whoMaxChildren;
+{	
+	int max;
+	int min;
+	pid_t * whoMaxChildren;	
+
+	// GETFROMSTACK(ustack, int, max, 0);
+	// GETFROMSTACK(ustack, int, min, 1);
 	GETFROMSTACK(ustack, pid_t *, whoMaxChildren, 0);
-	// GETFROMSTACK(ustack, int *, min, 0);
-	// GETFROMSTACK(ustack, int *, max, 0);
+
+	// GETFROMSTACK(ustack, int, max, 1);
+	// GETFROMSTACK(ustack, int, min, 2);
+	// sprintf(max);
+	// sprintf(min);
+
+	min = 3;
+	max = 37;
 	* whoMaxChildren = 0;
-	// FIXME: change below - min and max shouldn't be hardcoded
-	// get them from stack somehow
-	return posix_maxChildren(whoMaxChildren, 5, 19);
+	return posix_maxChildren(whoMaxChildren, min, max);
 }
 
 
