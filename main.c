@@ -13,7 +13,7 @@ void spawn_process_line() {
 	for (int i=0; i<19; i++) {
 		pid = fork();
 		if (pid == 0) {
-			// child process (NO FORK INSIDE THIS ELSE IF!)
+			// child process
 		}
 		else { // parent process
 			wait(NULL);
