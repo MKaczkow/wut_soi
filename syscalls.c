@@ -20,6 +20,7 @@
 #include "include/mman.h"
 #include "include/syscalls.h"
 #include "include/posix.h"
+#include "lib/printf.h"
 #include "lib/lib.h"
 #include "proc/proc.h"
 #include "vm/object.h"
@@ -27,30 +28,27 @@
 #include "syspage.h"
 #include "log/log.h"
 
+
 #define SYSCALLS_NAME(name)   syscalls_##name,
 #define SYSCALLS_STRING(name) #name,
 
 
 
-int syscalls_maxChildren(void * ustack)
+int syscalls_maxDescendants(void * ustack)
 {	
 	int max;
 	int min;
-	pid_t * whoMaxChildren;	
+	pid_t * whoMaxDescendants;	
 
-	// GETFROMSTACK(ustack, int, max, 0);
-	// GETFROMSTACK(ustack, int, min, 1);
-	GETFROMSTACK(ustack, pid_t *, whoMaxChildren, 0);
+	GETFROMSTACK(ustack, pid_t *, whoMaxDescendants, 0);
+	GETFROMSTACK(ustack, int, min, 1);
+	GETFROMSTACK(ustack, int, max, 2);
 
-	// GETFROMSTACK(ustack, int, max, 1);
-	// GETFROMSTACK(ustack, int, min, 2);
-	// sprintf(max);
-	// sprintf(min);
+	lib_printf("Search min: %d\n", min);
+	lib_printf("Search max: %d\n", max);
 
-	min = 3;
-	max = 37;
-	* whoMaxChildren = 0;
-	return posix_maxChildren(whoMaxChildren, min, max);
+	* whoMaxDescendants = 0;
+	return posix_maxDescendants(whoMaxDescendants, min, max);
 }
 
 

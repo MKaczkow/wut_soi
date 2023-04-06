@@ -1,9 +1,10 @@
 #
-# Makefile for phoenix-rtos-kernel/posix
+# Makefile for user application
 #
-# Copyright 2020 Phoenix Systems
-# Author: Pawel Pisarczyk
+# Copyright 2021 Phoenix Systems
 #
 
-OBJS += $(addprefix $(PREFIX_O)posix/, posix.o inet.o unix.o fdpass.o)
+NAME := maxDescendants
+LOCAL_SRCS := main.c
 
+include $(binary.mk)

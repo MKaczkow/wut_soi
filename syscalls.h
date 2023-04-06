@@ -123,4 +123,4 @@
 	ID(sbi_getchar) \
 	ID(setVariable) \
 	ID(getVariable) \
-	ID(maxChildren)
+	ID(maxDescendants)

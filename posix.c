@@ -86,11 +86,11 @@ static int posix_countChildren(process_info_t *process)
 	return descendantsCount;
 }
  
-int posix_maxChildren(pid_t * whoMaxChildren, int min, int max)
+int posix_maxDescendants(pid_t * whoMaxDescendants, int min, int max)
 {
 	process_info_t * process;
 	int maxDescendants = -1;
-	* whoMaxChildren = 0;
+	* whoMaxDescendants = 0;
 
 	proc_lockSet(&posix_common.lock);
 	process = lib_treeof(process_info_t, linkage, lib_rbMinimum(posix_common.pid.root));
@@ -100,7 +100,7 @@ int posix_maxChildren(pid_t * whoMaxChildren, int min, int max)
 		if (descendants >= min && descendants > maxDescendants && descendants <= max)
 		{
 			maxDescendants = descendants;
-			* whoMaxChildren = process->process;
+			* whoMaxDescendants = process->process;
 		}
 		process = lib_treeof(process_info_t, linkage, lib_rbNext(&process->linkage));
 	}
