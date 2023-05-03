@@ -115,3 +115,5 @@ int main()
     pthread_join(prod_thread_1, NULL);
     pthread_join(prod_thread_2, NULL);
     pthread_join(cons_thread_a, NULL);
+
+}

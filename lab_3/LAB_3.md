@@ -6,6 +6,8 @@
 2. Implementacja
 
 ## Komendy
+1. Start -> Ubuntu
+2. `cd /mnt/d/__repos/wut_soi/lab_3`
 
 ### Build systemu
 
