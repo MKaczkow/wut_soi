@@ -1,113 +1,120 @@
 #include <iostream>
+#include <vector>
 #include <string>
 #include "monitor.h"
 
 int const threadsCounts = 4;  //liczba wątków
 
-// int const numberOfLettersA = 20;
-// int const numberOfLettersB = 20;
+int const bufferSize = 9;
 
-std::string s;
 
-Semaphore semConsumerOdd(2);
-Semaphore semConsumerEven(1);
-Semaphore semProducer(3);
-
-// void writeA()
-// {
-// 	semA.p();
-// 	std::cout << "A" << std::flush;
-// 	s += "A";
-// 	semB.v();
-
-// }
-
-// void writeB()
-// {
-// 	semB.p();
-// 	std::cout << "B" << std::flush;
-// 	s += "B";
-// 	semA.v();
-// }
-
-// void* threadA(void* arg)
-// {
-// 	for (int i = 0; i < numberOfLettersA; ++i)
-// 	{
-// 		writeA();
-// 	}
-// 	return NULL;
-// }
-
-// void* threadB(void* arg)
-// {
-// 	for (int i = 0; i < numberOfLettersB; ++i)
-// 	{
-// 		writeB();
-// 	}
-// 	return NULL;
-// }
-
-void produce()
+class Buffer
 {
-	semProducer.p();
-	std::cout << "p" << std::flush;
-	// s += "B";
-	semProducer.v();
-}
+private:
+	Semaphore mutex;
+	Semaphore empty;
+	Semaphore full;
+	Semaphore semA;
+	Semaphore semB;
 
-void consumeEven()
-{
-	semConsumerEven.p();
-	std::cout << "e" << std::flush;
-	// s += "A";
-	semConsumerEven.v();
-}
+	std::vector<int> values;
 
-void consumeOdd()
-{
-	semConsumerOdd.p();
-	std::cout << "o" << std::flush;
-	// s += "A";
-	semConsumerOdd.v();
-}
-
-void* threadFirstProducer(void* arg)
-{
-	// std::cout << 'c' << std::endl;
-	for (int i = 0; i < 19; ++i)
+	void print(std::string name)
 	{
-		produce();
+		std::cout << "\n ###" << name << " " << values.size() << "[";
+		for (auto v : values)
+			std::cout << v << ",";
+		std::cout << "] ###\n";
+	}
+
+public:
+	Buffer() : mutex(1), empty(0), full(bufferSize), semA(1), semB(0)
+	{
+	}
+
+	void putA(int value)
+	{
+		full.p();
+		mutex.p();
+		values.push_back(value);
+		print("A production");
+		empty.v();
+		mutex.v();
+	}
+
+	void putB(int value)
+	{
+		full.p();
+		mutex.p();
+		values.push_back(value);
+		print("B production");
+		empty.v();
+		mutex.v();
+	}
+
+	int getA()
+	{
+		semA.p();
+		empty.p();
+		mutex.p();
+		auto value = values.front();
+		values.erase(values.begin());
+		print("A consumption");
+		full.v();
+		mutex.v();
+		semB.v();
+		return value;
+	}
+
+	int getB()
+	{
+		semB.p();
+		empty.p();
+		mutex.p();
+		auto value = values.front();
+		values.erase(values.begin());
+		print("B consumption");
+		full.v();
+		mutex.v();
+		semA.v();
+		return value;
+	}
+};
+
+Buffer buffer;
+
+void* threadProdA(void* arg)
+{
+	for (int i = 0; i < 20; ++i)
+	{
+		buffer.putA(i);
 	}
 	return NULL;
 }
 
-void* threadSecondProducer(void* arg)
+void* threadProdB(void* arg)
 {
-	// std::cout << 'c' << std::endl;
-	for (int i = 0; i < 19; ++i)
+	for (int i = 0; i < 20; ++i)
 	{
-		produce();
+		buffer.putB(i);
 	}
 	return NULL;
 }
 
-void* threadFirstConsumer(void* arg)
+void* threadConsA(void* arg)
 {
-	// std::cout << 'p' << std::endl;
-	for (int i = 0; i < 19; ++i)
+	for (int i = 0; i < 30; ++i)
 	{
-		consumeEven();
+		auto value = buffer.getA();
 	}
 	return NULL;
 }
 
-void* threadSecondConsumer(void* arg)
+void* threadConsB(void* arg)
 {
-	// std::cout << 'p' << std::endl;
-	for (int i = 0; i < 19; ++i)
+	for (int i = 0; i < 30; ++i)
 	{
-		consumeOdd();
+		auto value = buffer.getB();
 	}
 	return NULL;
 }
@@ -115,39 +122,30 @@ void* threadSecondConsumer(void* arg)
 int main()
 {
 #ifdef _WIN32
-	std::cout << "Windows??";
-	std::cout << "\n";
 	HANDLE tid[threadsCounts];
 	DWORD id;
 
 	// utworzenie wątków
-	tid[0] = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE)threadFirstProducer, 0, 0, &id);
-	tid[1] = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE)threadSecondProducer, 0, 0, &id);
-	tid[2] = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE)threadFirstConsumer, 0, 0, &id);
-	tid[3] = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE)threadSecondConsumer, 0, 0, &id);
+	tid[0] = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE)threadProdA, 0, 0, &id);
+	tid[1] = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE)threadProdB, 0, 0, &id);
+	tid[2] = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE)threadConsA, 0, 0, &id);
+	tid[3] = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE)threadConsB, 0, 0, &id);
 
 	// czekaj na zakończenie wątków
 	for (int i = 0; i <= threadsCounts; i++)
 		WaitForSingleObject(tid[i], INFINITE);
 #else
-	std::cout << "Non-Windows??";
-	std::cout << "\n";
 	pthread_t tid[threadsCounts];
 
 	// utworzenie wątków
-	// pthread_create(&(tid[0]), NULL, threadA, NULL);
-	// pthread_create(&(tid[1]), NULL, threadB, NULL);
-	pthread_create(&(tid[0]), NULL, threadFirstProducer, NULL);
-	pthread_create(&(tid[1]), NULL, threadSecondProducer, NULL);
-	pthread_create(&(tid[2]), NULL, threadFirstConsumer, NULL);
-	pthread_create(&(tid[3]), NULL, threadSecondConsumer, NULL);
+	pthread_create(&(tid[0]), NULL, threadProdA, NULL);
+	pthread_create(&(tid[1]), NULL, threadProdB, NULL);
+	pthread_create(&(tid[2]), NULL, threadConsA, NULL);
+	pthread_create(&(tid[3]), NULL, threadConsB, NULL);
 
-	//czekaj na zakoączenie wątków
+	//czekaj na zakończenie wątków
 	for (int i = 0; i < threadsCounts; i++)
 		pthread_join(tid[i], (void**)NULL);
 #endif
-	std::cout << "\n";
-	// std::cout << "s=" << s << "\n";
 	return 0;
 }
-
