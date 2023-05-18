@@ -2,11 +2,12 @@
 #include <vector>
 #include <string>
 #include "monitor.h"
+#include <time.h>
+#include <stdlib.h>
 
-int const threadsCounts = 4;  //liczba wątków
+int const threadsCounts = 4; // liczba wątków
 
 int const bufferSize = 9;
-
 
 class Buffer
 {
@@ -21,10 +22,12 @@ private:
 
 	void print(std::string name)
 	{
-		std::cout << "\n ###" << name << " " << values.size() << "[";
+		std::cout << "\n"
+				  << name << " "
+				  << "[";
 		for (auto v : values)
 			std::cout << v << ",";
-		std::cout << "] ###\n";
+		std::cout << "] \n";
 	}
 
 public:
@@ -52,30 +55,40 @@ public:
 		mutex.v();
 	}
 
-	int getA()
+	int getEven()
 	{
 		semA.p();
 		empty.p();
 		mutex.p();
-		auto value = values.front();
-		values.erase(values.begin());
-		print("A consumption");
-		full.v();
-		mutex.v();
+		auto value = -1;
+
+		if (values.front() % 2 == 1)
+		{
+			auto value = values.front();
+			values.erase(values.begin());
+			print("Even consumption");
+			full.v();
+			mutex.v();
+		}
 		semB.v();
 		return value;
 	}
 
-	int getB()
+	int getOdd()
 	{
 		semB.p();
 		empty.p();
 		mutex.p();
-		auto value = values.front();
-		values.erase(values.begin());
-		print("B consumption");
-		full.v();
-		mutex.v();
+		auto value = -1;
+
+		if (values.front() % 2 == 1)
+		{
+			auto value = values.front();
+			values.erase(values.begin());
+			print("Odd consumption");
+			full.v();
+			mutex.v();
+		}
 		semA.v();
 		return value;
 	}
@@ -83,38 +96,40 @@ public:
 
 Buffer buffer;
 
-void* threadProdA(void* arg)
+void *threadProdA(void *arg)
 {
 	for (int i = 0; i < 20; ++i)
 	{
-		buffer.putA(i);
+		int val = rand();
+		buffer.putA(val);
 	}
 	return NULL;
 }
 
-void* threadProdB(void* arg)
+void *threadProdB(void *arg)
 {
 	for (int i = 0; i < 20; ++i)
 	{
-		buffer.putB(i);
+		int val = rand();
+		buffer.putB(val);
 	}
 	return NULL;
 }
 
-void* threadConsA(void* arg)
+void *threadConsEven(void *arg)
 {
-	for (int i = 0; i < 30; ++i)
+	for (int i = 0; i < 20; ++i)
 	{
-		auto value = buffer.getA();
+		auto value = buffer.getEven();
 	}
 	return NULL;
 }
 
-void* threadConsB(void* arg)
+void *threadConsOdd(void *arg)
 {
-	for (int i = 0; i < 30; ++i)
+	for (int i = 0; i < 20; ++i)
 	{
-		auto value = buffer.getB();
+		auto value = buffer.getOdd();
 	}
 	return NULL;
 }
@@ -124,6 +139,7 @@ int main()
 #ifdef _WIN32
 	HANDLE tid[threadsCounts];
 	DWORD id;
+	srand(time(NULL)); // Initialization, should only be called once.
 
 	// utworzenie wątków
 	tid[0] = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE)threadProdA, 0, 0, &id);
@@ -136,16 +152,17 @@ int main()
 		WaitForSingleObject(tid[i], INFINITE);
 #else
 	pthread_t tid[threadsCounts];
+	srand(time(NULL)); // Initialization, should only be called once.
 
 	// utworzenie wątków
 	pthread_create(&(tid[0]), NULL, threadProdA, NULL);
 	pthread_create(&(tid[1]), NULL, threadProdB, NULL);
-	pthread_create(&(tid[2]), NULL, threadConsA, NULL);
-	pthread_create(&(tid[3]), NULL, threadConsB, NULL);
+	pthread_create(&(tid[2]), NULL, threadConsEven, NULL);
+	pthread_create(&(tid[3]), NULL, threadConsOdd, NULL);
 
-	//czekaj na zakończenie wątków
+	// czekaj na zakończenie wątków
 	for (int i = 0; i < threadsCounts; i++)
-		pthread_join(tid[i], (void**)NULL);
+		pthread_join(tid[i], (void **)NULL);
 #endif
 	return 0;
 }
