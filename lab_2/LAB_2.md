@@ -1,5 +1,5 @@
 # LAB 2
-*Tytuł*
+*Szeregowanie*
 
 # TODO
 
