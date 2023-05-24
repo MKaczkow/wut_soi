@@ -601,10 +601,8 @@ int threads_schedule(unsigned int n, cpu_context_t *context, void *arg)
 				}
 				else
 				{
-					if( (selected->process != NULL) && ((selected->process->id % 2) == 1) )
-						selected->slots = 2;
-					else
-						selected->slots = 1;
+					if(selected->process != NULL)
+						selected->slots = *proc->slots;
 				}
 			}
 			else
