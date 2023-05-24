@@ -19,7 +19,7 @@
 #include "../include/posix.h"
 #include "sockport.h"
 
-extern int posix_maxDescendants(pid_t * whoMaxChildren, int min, int max);
+extern int posix_setInitialSlot(pid_t * whoSetInitialSlots, int initialSlots);
 
 
 extern int posix_open(const char *filename, int oflag, char *ustack);

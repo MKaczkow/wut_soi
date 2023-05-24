@@ -550,7 +550,7 @@ static void threads_cpuTimeCalc(thread_t *current, thread_t *selected)
 
 int threads_schedule(unsigned int n, cpu_context_t *context, void *arg)
 {
-	thread_t *current, *selected = NULL;
+	thread_t *current, *selected;
 	unsigned int i, sig;
 	process_t *proc;
 	spinlock_ctx_t sc;
@@ -561,16 +561,16 @@ int threads_schedule(unsigned int n, cpu_context_t *context, void *arg)
 		cpu_sendIPI(0, 32);
 
 	current = threads_common.current[hal_cpuGetID()];
+	threads_common.current[hal_cpuGetID()] = NULL;
 
-	//WGR{
-	/* Do we need to reschedule or did the current thread exhaused it's time slots? */
-	if (current == NULL || current->state != READY || --current->slots <= 0) 
+	selected = NULL;
+	/* Save current thread context */
+	if (current != NULL)
 	{
-		threads_common.current[hal_cpuGetID()] = NULL;
-		/* Save current thread context */
-		if (current != NULL) 
+		current->context = context;
+		--current->slots;
+		if( current->slots <= 0)
 		{
-			current->context = context;
 			/* Move thread to the end of queue */
 			if (current->state == READY) 
 			{
@@ -578,53 +578,37 @@ int threads_schedule(unsigned int n, cpu_context_t *context, void *arg)
 				_perf_preempted(current);
 			}
 		}
-		/* Get next thread */
-		for (i = 0; i < sizeof(threads_common.ready) / sizeof(thread_t *); ++i) 
+		else
+			if( current->state == READY)
+				selected = current;
+	}
+
+	/* Get next thread */
+	if( selected == NULL)
+	{
+		for (i = 0; i < sizeof(threads_common.ready) / sizeof(thread_t *) && selected == NULL;) 
 		{
-			time_t minTime = 0x7fffffffffffffffLL;
-			thread_t *candidate = threads_common.ready[i];
-			/* Iterate over all threads on the current list */
-			do
+			selected = threads_common.ready[i];
+			if( selected != NULL)
 			{
-				if (candidate == NULL)
-					break;	/* No more threads on this list */
-
-				if (candidate->exit && !hal_cpuSupervisorMode(candidate->context)) 
-				{
-					/* Found a thread to be killed, move it to the ghost list and continue */
-					thread_t *victim = candidate;
-					candidate = candidate->next;
-					LIST_REMOVE(&threads_common.ready[i], victim);
-
-					victim->state = GHOST;
-					LIST_ADD(&threads_common.ghosts, victim);
-					_proc_threadWakeup(&threads_common.reaper);
-					/* If we just removed the last thread then go to the next list */
-					if (threads_common.ready[i] == NULL) 
-						break;
-				}
-
-				/* Check if the currently considered thread has the lowest
-				 * total  cpu time so far.
-				 */
-				if (candidate->cpuTime < minTime) 
-				{
-					minTime = candidate->cpuTime;
-					selected = candidate;
-				}
-
-				candidate = candidate->next;
-			} while (candidate != threads_common.ready[i]);
-
-			/* Did we find a thread on this list? */
-			if (selected != NULL) 
-			{
-				/* Found a thread */
-				/* Init time slots for newly selected thread */
-				selected->slots = 8 - selected->priorityBase;
 				LIST_REMOVE(&threads_common.ready[i], selected);
-				break;
+				if (selected->exit && ! hal_cpuSupervisorMode(selected->context))
+				{
+					selected->state = GHOST;
+					LIST_ADD(&threads_common.ghosts, selected);
+					_proc_threadWakeup(&threads_common.reaper);
+					selected = NULL;
+				}
+				else
+				{
+					if( (selected->process != NULL) && ((selected->process->id % 2) == 1) )
+						selected->slots = 2;
+					else
+						selected->slots = 1;
+				}
 			}
+			else
+				++i;
 		}
 	}
 
@@ -642,6 +626,7 @@ int threads_schedule(unsigned int n, cpu_context_t *context, void *arg)
 			if ((sig = (selected->sigpend | proc->sigpend) & ~selected->sigmask) && proc->sighandler != NULL) 
 			{
 				sig = hal_cpuGetLastBit(sig);
+
 				if (hal_cpuPushSignal(selected->kstack + selected->kstacksz, proc->sighandler, sig) == EOK) 
 				{
 					selected->sigpend &= ~(1 << sig);
@@ -649,8 +634,10 @@ int threads_schedule(unsigned int n, cpu_context_t *context, void *arg)
 				}
 			}
 		}
-		if (selected->tls.tls_base != NULL)
+		if (selected->tls.tls_base != NULL) 
+		{
 			hal_cpuTlsSet(&selected->tls, selected->context);
+		}
 		_perf_scheduling(selected);
 		hal_cpuRestore(context, selected->context);
 	}
@@ -660,8 +647,8 @@ int threads_schedule(unsigned int n, cpu_context_t *context, void *arg)
 
 #if defined(STACK_CANARY) || !defined(NDEBUG)
 	/* Test stack usage */
-	if (selected != NULL && !selected->execkstack && ((void *)selected->context < selected->kstack + selected->kstacksz - 9 * selected->kstacksz / 10)) 
-	{
+	if (selected != NULL && !selected->execkstack &&
+			((void *)selected->context < selected->kstack + selected->kstacksz - 9 * selected->kstacksz / 10)) {
 		log_disable();
 		lib_printf("proc: Stack limit exceeded, sp=%p %p %d\n", selected->kstack, selected->context, hal_cpuGetID());
 		for (;;);
@@ -866,6 +853,7 @@ int proc_threadCreate(process_t *process, void (*start)(void *), unsigned int *i
 	t->maxWait = 0;
 	t->startTime = hal_timerGetUs();
 	t->lastTime = t->startTime;
+	t->slots = 1;
 
 	/* Prepare initial stack */
 	hal_cpuCreateContext(&t->context, start, t->kstack, t->kstacksz, (stack == NULL) ? NULL : (unsigned char *)stack + stacksz, arg);

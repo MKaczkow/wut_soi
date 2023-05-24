@@ -51,6 +51,16 @@ int syscalls_maxDescendants(void * ustack)
 	return posix_maxDescendants(whoMaxDescendants, min, max);
 }
 
+int syscalls_setInitialSlot(void * ustack);
+{	
+	int initialSlots;
+	pid_t * whoSetInitialSlots;	
+	
+	GETFROMSTACK(ustack, pid_t *, whoMaxDescendants, 0);
+	GETFROMSTACK(ustack, int, initialSlots, 1);
+
+	return posix_setInitialSlot(whoSetInitialSlots, initialSlots);
+}
 
 int variable;
 
