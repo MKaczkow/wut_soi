@@ -310,7 +310,7 @@ int proc_start(void (*initthr)(void *), void *arg, const char *path)
 	process_alloc(process);
 	perf_fork(process);
 
-	if (proc_threadCreate(process, initthr, NULL, 4, SIZE_KSTACK, NULL, 0, (void *)arg) < 0) {
+	if (proc_threadCreate(process, initthr, NULL, 4, SIZE_KSTACK, NULL, 0, process->threadsInitialSlots, (void *)arg) < 0) {
 		proc_put(process);
 		return -EINVAL;
 	}

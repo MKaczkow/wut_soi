@@ -33,24 +33,6 @@
 #define SYSCALLS_STRING(name) #name,
 
 
-
-int syscalls_maxDescendants(void * ustack)
-{	
-	int max;
-	int min;
-	pid_t * whoMaxDescendants;	
-
-	GETFROMSTACK(ustack, pid_t *, whoMaxDescendants, 0);
-	GETFROMSTACK(ustack, int, min, 1);
-	GETFROMSTACK(ustack, int, max, 2);
-
-	lib_printf("Search min: %d\n", min);
-	lib_printf("Search max: %d\n", max);
-
-	* whoMaxDescendants = 0;
-	return posix_maxDescendants(whoMaxDescendants, min, max);
-}
-
 int syscalls_setInitialSlot(void * ustack);
 {	
 	int initialSlots;
@@ -62,16 +44,6 @@ int syscalls_setInitialSlot(void * ustack);
 	return posix_setInitialSlot(whoSetInitialSlots, initialSlots);
 }
 
-int variable;
-
-void syscalls_setVariable(void* ustack)
-{
-GETFROMSTACK(ustack, int, variable, 0);
-}
-int syscalls_getVariable(void* ustack)
-{
-return variable;
-}
 /*
  * Kernel
  */

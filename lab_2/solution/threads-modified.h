@@ -114,7 +114,7 @@ extern thread_t *proc_current(void);
 extern void threads_canaryInit(thread_t *t, void *ustack);
 
 
-extern int proc_threadCreate(process_t *process, void (*start)(void *), unsigned int *id, unsigned int priority, size_t kstacksz, void *stack, size_t stacksz, void *arg);
+extern int proc_threadCreate(process_t *process, void (*start)(void *), unsigned int *id, unsigned int priority, size_t kstacksz, void *stack, size_t stacksz, int initialSlots, void *arg);
 
 
 extern int proc_threadPriority(int priority);

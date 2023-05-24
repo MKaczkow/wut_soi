@@ -811,7 +811,7 @@ void threads_canaryInit(thread_t *t, void *ustack)
 }
 
 
-int proc_threadCreate(process_t *process, void (*start)(void *), unsigned int *id, unsigned int priority, size_t kstacksz, void *stack, size_t stacksz, void *arg)
+int proc_threadCreate(process_t *process, void (*start)(void *), unsigned int *id, unsigned int priority, size_t kstacksz, void *stack, size_t stacksz, int initialSlots, void *arg)
 {
 	thread_t *t;
 	spinlock_ctx_t sc;
@@ -853,7 +853,7 @@ int proc_threadCreate(process_t *process, void (*start)(void *), unsigned int *i
 	t->maxWait = 0;
 	t->startTime = hal_timerGetUs();
 	t->lastTime = t->startTime;
-	t->slots = 1;
+	t->slots = initialSlots;
 
 	/* Prepare initial stack */
 	hal_cpuCreateContext(&t->context, start, t->kstack, t->kstacksz, (stack == NULL) ? NULL : (unsigned char *)stack + stacksz, arg);
