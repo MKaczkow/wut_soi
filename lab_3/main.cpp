@@ -41,7 +41,7 @@ public:
 		mutex.p();
 		values.push_back(value);
 		print("A production");
-		if (sizeof(values) / sizeof(int) > 3)
+		if (sizeof(values) / sizeof(value) > 3)
 		{
 			empty.v();
 		}
@@ -54,7 +54,7 @@ public:
 		mutex.p();
 		values.push_back(value);
 		print("B production");
-		if (sizeof(values) / sizeof(int) > 3)
+		if (sizeof(values) / sizeof(value) > 3)
 		{
 			empty.v();
 		}
