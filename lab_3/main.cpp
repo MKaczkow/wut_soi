@@ -31,16 +31,27 @@ private:
 	}
 
 public:
-	Buffer() : mutex(1), empty(0), full(bufferSize), semEven(1), semOdd(1)
+	Buffer() : mutex(1), empty(0), full(bufferSize), semEven(0), semOdd(0)
 	{
 	}
 
 	void putA(int value)
 	{
+
+		// first item => set semEven or semOdd
+		if (sizeof(values) == 0) {
+			if (value % 2 == 0) {
+				semEven.v();
+			}
+			else {
+				semOdd.v();
+			}
+		}
 		full.p();
 		mutex.p();
 		values.push_back(value);
 		print("A production");
+
 		if (sizeof(values) / sizeof(value) > 3)
 		{
 			empty.v();
@@ -50,10 +61,20 @@ public:
 
 	void putB(int value)
 	{
+		// first item => set semEven or semOdd
+		if (sizeof(values) == 0) {
+			if (value % 2 == 0) {
+				semEven.v();
+			}
+			else {
+				semOdd.v();
+			}
+		}
 		full.p();
 		mutex.p();
 		values.push_back(value);
 		print("B production");
+
 		if (sizeof(values) / sizeof(value) > 3)
 		{
 			empty.v();
@@ -63,22 +84,24 @@ public:
 
 	int getEven()
 	{
+		semEven.p();
 		empty.p();
 		mutex.p();
+
 		auto value = values.front();
-		if (value % 2 == 0) {
-			semEven.p();
-		} else {
-			semOdd.p();
-		}
 		values.erase(values.begin());
-		print("Even consumption");
 		auto nextValue = values.front();
-		if (nextValue % 2 == 0) {
+		if (nextValue % 2 == 0)
+		{
 			semEven.v();
-		} else {
+		}
+		else
+		{
 			semOdd.v();
 		}
+
+		print("Even consumption");
+
 		full.v();
 		mutex.v();
 		return value;
@@ -86,22 +109,24 @@ public:
 
 	int getOdd()
 	{
+		semOdd.p();
 		empty.p();
 		mutex.p();
+
 		auto value = values.front();
-		if (value % 2 == 0) {
-			semEven.p();
-		} else {
-			semOdd.p();
-		}
 		values.erase(values.begin());
-		print("Odd consumption");
 		auto nextValue = values.front();
-		if (nextValue % 2 == 0) {
+		if (nextValue % 2 == 0)
+		{
 			semEven.v();
-		} else {
+		}
+		else
+		{
 			semOdd.v();
 		}
+
+		print("Odd consumption");
+
 		full.v();
 		mutex.v();
 		return value;
@@ -114,7 +139,7 @@ void *threadProdA(void *arg)
 {
 	for (int i = 0; i < 20; ++i)
 	{
-		int val = rand();
+		int val = rand() % 10;
 		buffer.putA(val);
 	}
 	return NULL;
@@ -124,7 +149,7 @@ void *threadProdB(void *arg)
 {
 	for (int i = 0; i < 20; ++i)
 	{
-		int val = rand();
+		int val = rand() % 10;
 		buffer.putB(val);
 	}
 	return NULL;
