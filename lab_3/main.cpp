@@ -5,10 +5,9 @@
 #include <time.h>
 #include <stdlib.h>
 
-int const threadsCounts = 4;  //liczba wątków
+int const threadsCounts = 4; // liczba wątków
 
 int const bufferSize = 9;
-
 
 class Buffer
 {
@@ -16,21 +15,23 @@ private:
 	Semaphore mutex;
 	Semaphore empty;
 	Semaphore full;
-	Semaphore semA;
-	Semaphore semB;
+	Semaphore semEven;
+	Semaphore semOdd;
 
 	std::vector<int> values;
 
 	void print(std::string name)
 	{
-		std::cout << "\n" << name << " "  << "[";
+		std::cout << "\n"
+				  << name << " "
+				  << "[";
 		for (auto v : values)
 			std::cout << v << ",";
 		std::cout << "] \n";
 	}
 
 public:
-	Buffer() : mutex(1), empty(0), full(bufferSize), semA(1), semB(0)
+	Buffer() : mutex(1), empty(0), full(bufferSize), semEven(1), semOdd(1)
 	{
 	}
 
@@ -40,7 +41,10 @@ public:
 		mutex.p();
 		values.push_back(value);
 		print("A production");
-		empty.v();
+		if (sizeof(values) / sizeof(int) > 3)
+		{
+			empty.v();
+		}
 		mutex.v();
 	}
 
@@ -50,52 +54,73 @@ public:
 		mutex.p();
 		values.push_back(value);
 		print("B production");
-		empty.v();
+		if (sizeof(values) / sizeof(int) > 3)
+		{
+			empty.v();
+		}
 		mutex.v();
 	}
 
 	int getEven()
 	{
-		semA.p();
 		empty.p();
 		mutex.p();
 		auto value = values.front();
+		if (value % 2 == 0) {
+			semEven.p();
+		} else {
+			semOdd.p();
+		}
 		values.erase(values.begin());
 		print("Even consumption");
+		auto nextValue = values.front();
+		if (nextValue % 2 == 0) {
+			semEven.v();
+		} else {
+			semOdd.v();
+		}
 		full.v();
 		mutex.v();
-		semB.v();
 		return value;
 	}
 
 	int getOdd()
 	{
-		semB.p();
 		empty.p();
 		mutex.p();
 		auto value = values.front();
+		if (value % 2 == 0) {
+			semEven.p();
+		} else {
+			semOdd.p();
+		}
 		values.erase(values.begin());
 		print("Odd consumption");
+		auto nextValue = values.front();
+		if (nextValue % 2 == 0) {
+			semEven.v();
+		} else {
+			semOdd.v();
+		}
 		full.v();
 		mutex.v();
-		semA.v();
 		return value;
 	}
 };
 
 Buffer buffer;
 
-void* threadProdA(void* arg)
+void *threadProdA(void *arg)
 {
 	for (int i = 0; i < 20; ++i)
-	{	
+	{
 		int val = rand();
 		buffer.putA(val);
 	}
 	return NULL;
 }
 
-void* threadProdB(void* arg)
+void *threadProdB(void *arg)
 {
 	for (int i = 0; i < 20; ++i)
 	{
@@ -105,16 +130,16 @@ void* threadProdB(void* arg)
 	return NULL;
 }
 
-void* threadConsEven(void* arg)
+void *threadConsEven(void *arg)
 {
 	for (int i = 0; i < 20; ++i)
-	{	
+	{
 		auto value = buffer.getEven();
 	}
 	return NULL;
 }
 
-void* threadConsOdd(void* arg)
+void *threadConsOdd(void *arg)
 {
 	for (int i = 0; i < 20; ++i)
 	{
@@ -128,7 +153,7 @@ int main()
 #ifdef _WIN32
 	HANDLE tid[threadsCounts];
 	DWORD id;
-	srand(time(NULL));   // Initialization, should only be called once.
+	srand(time(NULL)); // Initialization, should only be called once.
 
 	// utworzenie wątków
 	tid[0] = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE)threadProdA, 0, 0, &id);
@@ -141,7 +166,7 @@ int main()
 		WaitForSingleObject(tid[i], INFINITE);
 #else
 	pthread_t tid[threadsCounts];
-	srand(time(NULL));   // Initialization, should only be called once.
+	srand(time(NULL)); // Initialization, should only be called once.
 
 	// utworzenie wątków
 	pthread_create(&(tid[0]), NULL, threadProdA, NULL);
@@ -149,9 +174,9 @@ int main()
 	pthread_create(&(tid[2]), NULL, threadConsEven, NULL);
 	pthread_create(&(tid[3]), NULL, threadConsOdd, NULL);
 
-	//czekaj na zakończenie wątków
+	// czekaj na zakończenie wątków
 	for (int i = 0; i < threadsCounts; i++)
-		pthread_join(tid[i], (void**)NULL);
+		pthread_join(tid[i], (void **)NULL);
 #endif
 	return 0;
 }
