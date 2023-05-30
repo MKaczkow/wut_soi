@@ -37,61 +37,54 @@ public:
 
 	void putA(int value)
 	{
-
-		// first item => set semEven or semOdd
-		if (sizeof(values) == 0) {
-			if (value % 2 == 0) {
-				semEven.v();
-			}
-			else {
-				semOdd.v();
-			}
-		}
 		full.p();
 		mutex.p();
 		values.push_back(value);
 		print("A production");
 
-		if (sizeof(values) / sizeof(value) > 3)
+		if (values.size() == 4)
 		{
-			empty.v();
+			if (values.front() % 2 == 0 ){
+				semEven.v();
+			} else {
+				
+				semOdd.v();
+			}
 		}
+		empty.v();
 		mutex.v();
 	}
 
 	void putB(int value)
 	{
-		// first item => set semEven or semOdd
-		if (sizeof(values) == 0) {
-			if (value % 2 == 0) {
-				semEven.v();
-			}
-			else {
-				semOdd.v();
-			}
-		}
 		full.p();
 		mutex.p();
 		values.push_back(value);
 		print("B production");
 
-		if (sizeof(values) / sizeof(value) > 3)
+		if (values.size() == 4)
 		{
-			empty.v();
+			if (values.front() % 2 == 0 ){
+				semEven.v();
+			} else {
+				
+				semOdd.v();
+			}
 		}
+		empty.v();
 		mutex.v();
 	}
 
 	int getEven()
 	{
 		semEven.p();
-		empty.p();
 		mutex.p();
+		empty.p();
 
 		auto value = values.front();
 		values.erase(values.begin());
 		auto nextValue = values.front();
-		if (nextValue % 2 == 0)
+		if (values.size() > 3 && nextValue % 2 == 0)
 		{
 			semEven.v();
 		}
@@ -110,13 +103,13 @@ public:
 	int getOdd()
 	{
 		semOdd.p();
-		empty.p();
 		mutex.p();
+		empty.p();
 
 		auto value = values.front();
 		values.erase(values.begin());
 		auto nextValue = values.front();
-		if (nextValue % 2 == 0)
+		if (values.size() > 3 && nextValue % 2 == 0)
 		{
 			semEven.v();
 		}
@@ -187,7 +180,7 @@ int main()
 	tid[3] = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE)threadConsOdd, 0, 0, &id);
 
 	// czekaj na zakończenie wątków
-	for (int i = 0; i <= threadsCounts; i++)
+	for (int i = 0; i <  threadsCounts; i++)
 		WaitForSingleObject(tid[i], INFINITE);
 #else
 	pthread_t tid[threadsCounts];
