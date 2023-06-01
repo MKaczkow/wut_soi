@@ -44,14 +44,16 @@ public:
 
 		if (values.size() == 4)
 		{
-			if (values.front() % 2 == 0 ){
+			if (values.front() % 2 == 0)
+			{
 				semEven.v();
-			} else {
-				
+			}
+			else
+			{
+
 				semOdd.v();
 			}
 		}
-		empty.v();
 		mutex.v();
 	}
 
@@ -64,14 +66,16 @@ public:
 
 		if (values.size() == 4)
 		{
-			if (values.front() % 2 == 0 ){
+			if (values.front() % 2 == 0)
+			{
 				semEven.v();
-			} else {
-				
+			}
+			else
+			{
+
 				semOdd.v();
 			}
 		}
-		empty.v();
 		mutex.v();
 	}
 
@@ -79,18 +83,17 @@ public:
 	{
 		semEven.p();
 		mutex.p();
-		empty.p();
 
 		auto value = values.front();
 		values.erase(values.begin());
 		auto nextValue = values.front();
-		if (values.size() > 3 && nextValue % 2 == 0)
+
+		if (values.size() > 3)
 		{
-			semEven.v();
-		}
-		else
-		{
-			semOdd.v();
+			if (nextValue % 2 == 0)
+				semEven.v();
+			else
+				semOdd.v();
 		}
 
 		print("Even consumption");
@@ -104,18 +107,18 @@ public:
 	{
 		semOdd.p();
 		mutex.p();
-		empty.p();
 
 		auto value = values.front();
 		values.erase(values.begin());
 		auto nextValue = values.front();
-		if (values.size() > 3 && nextValue % 2 == 0)
+		// problem wystąpi kiedy w buforze jest 1 element
+		// czy coś gwarantuje, że konsumenci nie konsumują kiedy w buforze jest 3 lub mniej elementów?
+		if (values.size() > 3)
 		{
-			semEven.v();
-		}
-		else
-		{
-			semOdd.v();
+			if (nextValue % 2 == 0)
+				semEven.v();
+			else
+				semOdd.v();
 		}
 
 		print("Odd consumption");
@@ -180,7 +183,7 @@ int main()
 	tid[3] = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE)threadConsOdd, 0, 0, &id);
 
 	// czekaj na zakończenie wątków
-	for (int i = 0; i <  threadsCounts; i++)
+	for (int i = 0; i < threadsCounts; i++)
 		WaitForSingleObject(tid[i], INFINITE);
 #else
 	pthread_t tid[threadsCounts];
