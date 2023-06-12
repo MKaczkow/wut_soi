@@ -1,0 +1,75 @@
+server: semaphore (servers S_consumeEven, S_consumeOdd, S_produceA, S_produceB; agents A_consumeEven, A_consumeOdd, A_produceA, A_produceB),
+services {p, v},
+states {state_up, state_down},
+actions {
+  {A_consumeEven.semaphore.p, semaphore.state_up} -> {A_consumeEven.S_consumeEven.ok, semaphore.state_down},
+  {A_consumeEven.semaphore.v, semaphore.state_up} -> {A_consumeEven.S_consumeEven.ok, semaphore.state_up},
+  {A_consumeEven.semaphore.v, semaphore.state_down} -> {A_consumeEven.S_consumeEven.ok, semaphore.state_up},
+  {A_consumeOdd.semaphore.p, semaphore.state_up} -> {A_consumeOdd.S_consumeOdd.ok, semaphore.state_down},
+  {A_consumeOdd.semaphore.v, semaphore.state_up} -> {A_consumeOdd.S_consumeOdd.ok, semaphore.state_up},
+  {A_consumeOdd.semaphore.v, semaphore.state_down} -> {A_consumeOdd.S_consumeOdd.ok, semaphore.state_up},
+  {A_produceA.semaphore.p, semaphore.state_up} -> {A_produceA.S_produceA.ok, semaphore.state_down},
+  {A_produceA.semaphore.v, semaphore.state_up} -> {A_produceA.S_produceA.ok, semaphore.state_up},
+  {A_produceA.semaphore.v, semaphore.state_down} -> {A_produceA.S_produceA.ok, semaphore.state_up},
+  {A_produceB.semaphore.p, semaphore.state_up} -> {A_produceB.S_produceB.ok, semaphore.state_down},
+  {A_produceB.semaphore.v, semaphore.state_up} -> {A_produceB.S_produceB.ok, semaphore.state_up},
+  {A_produceB.semaphore.v, semaphore.state_down} -> {A_produceB.S_produceB.ok, semaphore.state_up},
+};
+
+server: S_consumeEven (servers mutex: semaphore, empty: semaphore, semEven: semaphore, semOdd: semaphore; agents A_consumeEven),
+services {ok},
+states {s0_semEven_p, s3_mutex_p, s6_full_v, s9_mutex_v},
+actions {
+  {A_consumeEven.S_consumeEven.ok, S_consumeEven.s0_semEven_p} -> {A_consumeEven.mutex.p, S_consumeEven.s3_mutex_p},
+  {A_consumeEven.S_consumeEven.ok, S_consumeEven.s3_mutex_p} -> {A_consumeEven.full.v, S_consumeEven.s6_full_v},
+  {A_consumeEven.S_consumeEven.ok, S_consumeEven.s6_full_v} -> {A_consumeEven.mutex.v, S_consumeEven.s9_mutex_v},
+  {A_consumeEven.S_consumeEven.ok, S_consumeEven.s9_mutex_v} -> {A_consumeEven.semEven.p, S_consumeEven.s0_semEven_p},
+};
+
+server: S_consumeOdd (servers mutex: semaphore, empty: semaphore, semEven: semaphore, semOdd: semaphore; agents A_consumeOdd),
+services {ok},
+states {s0_semOdd_p, s3_mutex_p, s6_full_v, s9_mutex_v},
+actions {
+  {A_consumeOdd.S_consumeOdd.ok, S_consumeOdd.s0_semOdd_p} -> {A_consumeOdd.mutex.p, S_consumeOdd.s3_mutex_p},
+  {A_consumeOdd.S_consumeOdd.ok, S_consumeOdd.s3_mutex_p} -> {A_consumeOdd.full.v, S_consumeOdd.s6_full_v},
+  {A_consumeOdd.S_consumeOdd.ok, S_consumeOdd.s6_full_v} -> {A_consumeOdd.mutex.v, S_consumeOdd.s9_mutex_v},
+  {A_consumeOdd.S_consumeOdd.ok, S_consumeOdd.s9_mutex_v} -> {A_consumeOdd.semOdd.p, S_consumeOdd.s0_semOdd_p},
+};
+
+server: S_produceA (servers mutex: semaphore, empty: semaphore, semEven: semaphore, semOdd: semaphore; agents A_produceA),
+services {ok},
+states {s0_full_p, s3_mutex_p, s6_mutex_v},
+actions {
+  {A_produceA.S_produceA.ok, S_produceA.s0_full_p} -> {A_produceA.mutex.p, S_produceA.s3_mutex_p},
+  {A_produceA.S_produceA.ok, S_produceA.s3_mutex_p} -> {A_produceA.mutex.v, S_produceA.s6_mutex_v},
+  {A_produceA.S_produceA.ok, S_produceA.s6_mutex_v} -> {A_produceA.full.p, S_produceA.s0_full_p},
+};
+
+server: S_produceB (servers mutex: semaphore, empty: semaphore, semEven: semaphore, semOdd: semaphore; agents A_produceB),
+services {ok},
+states {s0_full_p, s3_mutex_p, s6_mutex_v},
+actions {
+  {A_produceB.S_produceB.ok, S_produceB.s0_full_p} -> {A_produceB.mutex.p, S_produceB.s3_mutex_p},
+  {A_produceB.S_produceB.ok, S_produceB.s3_mutex_p} -> {A_produceB.mutex.v, S_produceB.s6_mutex_v},
+  {A_produceB.S_produceB.ok, S_produceB.s6_mutex_v} -> {A_produceB.full.p, S_produceB.s0_full_p},
+};
+
+agents A_consumeEven, A_consumeOdd, A_produceA, A_produceB;
+
+servers S_consumeEven, S_consumeOdd, S_produceA, S_produceB, mutex: semaphore, empty: semaphore, semEven: semaphore, semOdd: semaphore;
+
+init -> {
+  mutex(S_consumeEven,S_consumeOdd,S_produceA,S_produceB,A_consumeEven,A_consumeOdd,A_produceA,A_produceB).state_up,
+  empty(S_consumeEven,S_consumeOdd,S_produceA,S_produceB,A_consumeEven,A_consumeOdd,A_produceA,A_produceB).state_down,
+  semEven(S_consumeEven,S_consumeOdd,S_produceA,S_produceB,A_consumeEven,A_consumeOdd,A_produceA,A_produceB).state_down,
+  semOdd(S_consumeEven,S_consumeOdd,S_produceA,S_produceB,A_consumeEven,A_consumeOdd,A_produceA,A_produceB).state_down,
+  S_consumeEven(mutex,empty,semEven,semOdd,A_consumeEven).s0_semEven_p,
+  A_consumeEven.semEven.p,
+  S_consumeOdd(mutex,empty,semEven,semOdd,A_consumeOdd).s0_semOdd_p,
+  A_consumeOdd.semOdd.p,
+  S_produceA(mutex,empty,semEven,semOdd,A_produceA).s0_full_p,
+  A_produceA.full.p,
+  S_produceB(mutex,empty,semEven,semOdd,A_produceB).s0_full_p,
+  A_produceB.full.p,
+}.
+
