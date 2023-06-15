@@ -12,6 +12,9 @@
 ### Start systemu
 
 ## Inne
+* usunięcie pliku zamiast tworzenia / usuwania katalogu
+* naprawa -> operacja powodująca spójność systemu pliku + dokończenie transakcji
+* otwórz / zamknij -> znajdź plik o danej nazwie (deskryptor) -> deskryptor otwartego pliku w pamięci operacyjnej (pozycja w pliku!, nazwa)
 
 ## Gdzie trzeba wprowadzać zmiany
 
