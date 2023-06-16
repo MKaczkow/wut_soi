@@ -1,0 +1,68 @@
+server semaphore {
+    var state : {up, down};
+
+    {p | state = :up} -> {state = :down}
+    {v} -> {state = :up}
+}
+
+server buffer {
+	var values : (0..10)[10]
+	{ firstEven | values[0] % 2 == 0} -> {return :true; }
+}
+
+var mutex = semaphore() {state = :up};
+var empty = semaphore() {state = :down};
+var semEven = semaphore() {state = :down};
+var semOdd = semaphore() {state = :down};
+
+process consumeEven() {
+	loop {
+		mutex.p();
+		semEven.p();
+			match buffer.firstEven() {
+				:true => semEven.v();
+				:false => semOdd.v();
+			}
+		full.v();
+		mutex.v();
+	}
+}
+
+process consumeOdd() {
+	loop {
+		mutex.p();
+		semOdd.p();
+			match buffer.firstEven() {
+				:true => semEven.v();
+				:false => semOdd.v();
+			}
+		full.v();
+		mutex.v();
+	}
+}
+
+process produceA() {
+	loop {
+		mutex.p();
+		full.p();
+		buffer.put(0);
+			match buffer.firstEven() {
+				:true => semEven.v();
+				:false => semOdd.v();
+			}
+		mutex.v();
+	}
+}
+
+process produceB() {
+	loop {
+		mutex.p();
+		full.p();
+		buffer.put(0);
+			match buffer.firstEven() {
+				:true => semEven.v();
+				:false => semOdd.v();
+			}
+		mutex.v();
+	}
+}

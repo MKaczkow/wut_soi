@@ -1,0 +1,49 @@
+server semaphore {
+    var state : {up, down};
+
+    {p | state = :up} -> {state = :down}
+    {v} -> {state = :up}
+}
+
+var mutex = semaphore() {state = :up};
+var empty = semaphore() {state = :down};
+var semEven = semaphore() {state = :down};
+var semOdd = semaphore() {state = :down};
+
+process consumeEven() {
+	loop {
+		semEven.p();
+		mutex.p();
+
+		full.v();
+		mutex.v();
+	}
+}
+
+process consumeOdd() {
+	loop {
+		semOdd.p();
+		mutex.p();
+
+		full.v();
+		mutex.v();
+	}
+}
+
+process produceA() {
+	loop {
+		full.p();
+		mutex.p();
+
+		mutex.v();
+	}
+}
+
+process produceB() {
+	loop {
+		full.p();
+		mutex.p();
+
+		mutex.v();
+	}
+}

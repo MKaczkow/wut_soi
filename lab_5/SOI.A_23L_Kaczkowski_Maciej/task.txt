@@ -1,0 +1,3 @@
+Przy realizacji zadania do synchronizacji należy wykorzystać semafor (tylko operacje p i v) – klasa Semaphore zdefiniowana w pliku monitor.h znajdującym się na stronie przedmiotu. Zadanie należy wykonać z użyciem wątków (korzystając ze zmiennych globalnych). Bufor 9 elementowy FIFO. Danych jest 2 producentów i 2 konsumentów. Producenci produkują losowe liczby umieszczając je w buforze. Konsument A konsumuje wyłącznie liczby parzyste. Konsument B wyłącznie liczby nieparzyste. Odczyt (usunięcie) jest dozwolone, gdy liczba elementów w buforze jest większa niż 3.
+
+Początkowa wersja zawierała zakleszczenia (zła obsługa semaforów semOdd() oraz semEven()), druga nie.

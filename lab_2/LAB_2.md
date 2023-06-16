@@ -11,6 +11,12 @@
 ## Komendy
 
 ### Build systemu
+`cd ~/phoenix-rtos-project`  
+`TARGET=ia32-generic-qemu ./phoenix-rtos-build/build.sh clean all`  
+
+### Start systemu
+`qemu-system-i386 -cpu pentium3  -smp 1  -serial stdio -display curses -hda ~/phoenix-rtos-project/_boot/ia32-generic-qemu/phoenix.disk -netdev user,id=net0   -device rtl8139,netdev=net0`  
+`cd /usr/bin`
 
 ### Start systemu
 
