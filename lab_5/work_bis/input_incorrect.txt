@@ -1,0 +1,68 @@
+const N = 9;
+
+server binary_semaphore {
+    var state : {up, down};
+
+    {p | state = :up} -> {state = :down}
+    {v} -> {state = :up}
+}
+
+server general_semaphore {
+	var state: 0..N;
+
+	{p | state > 0} -> {state = state - 1; return :ok;}
+	{v | state < N} -> {state = state + 1; return :ok;}
+	{v | state == N} -> {return :ok;}
+}
+
+var mutex = binary_semaphore() {state = :up};
+var empty = binary_semaphore() {state = :down};
+var semA = binary_semaphore() {state = :down};
+var semB = binary_semaphore() {state = :down};
+var full = general_semaphore() {state = 9};
+
+process consumeA() {
+	loop {
+
+		mutex.p();
+		semA.p();
+
+		full.v();
+		mutex.v();
+	}
+}
+
+process consumeB() {
+	loop {
+
+		mutex.p();
+		semB.p();
+
+		full.v();
+		mutex.v();
+	}
+}
+
+process produceA() {
+	loop {
+		full.p();
+		mutex.p();
+
+		semA.v();
+
+		empty.v();
+		mutex.v();
+	}
+}
+
+process produceB() {
+	loop {
+		full.p();
+		mutex.p();
+
+		semB.v();
+
+		empty.v();
+		mutex.v();
+	}
+}
