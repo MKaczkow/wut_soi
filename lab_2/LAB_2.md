@@ -7,6 +7,7 @@
 3. Modyfikacja funkcji `schedule` tak, aby przełączała na inny wątek tylko wtedy, kiedy liczba jest równa 0, w przeciwnym wypadku zmniejsza liczbę o 1
 4. Dodać wywołanie systemowe, które pozwala na zmianę bazowej wartości `slots` w deskryptorze procesu
 5. Jakieś procesy, które mają ilość kwantów nietypową i zobaczyć co się dzieje
+6. Deskryptor procesu w `proc_start`, a deskryptor wątku w `proc_threadCreate`
 
 ## Komendy
 
